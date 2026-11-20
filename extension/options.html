@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Cài đặt – In bill thứ 2</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; color: #1f2937; }
+    h1 { font-size: 20px; } h2 { font-size: 15px; margin: 28px 0 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+    label { display: block; font-weight: 600; font-size: 13px; margin-top: 12px; }
+    small { display: block; font-weight: 400; color: #6b7280; margin-top: 2px; }
+    input[type=text], input[type=number], textarea, select { width: 100%; box-sizing: border-box; padding: 7px 9px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; margin-top: 4px; }
+    textarea { min-height: 56px; }
+    .row { display: flex; gap: 12px; } .row > * { flex: 1; }
+    .check { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; margin-top: 12px; }
+    .bar { position: sticky; bottom: 0; background: #fff; padding: 12px 0; margin-top: 20px; border-top: 1px solid #e5e7eb; display: flex; gap: 8px; align-items: center; }
+    button { padding: 8px 14px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font: inherit; cursor: pointer; }
+    button.primary { background: #be185d; border-color: #be185d; color: #fff; font-weight: 600; }
+    #msg { font-size: 13px; color: #047857; } #msg.err { color: #b91c1c; }
+    code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; }
+    .hint { background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1>In bill thứ 2 (80×45mm) – Cài đặt máy thu ngân</h1>
+
+  <h2>1. Kết nối</h2>
+  <label>Địa chỉ web Xưởng tem
+    <small>Nơi admin chọn danh sách sản phẩm. Ví dụ: http://192.168.1.100:4200</small>
+    <input type="text" id="serverUrl" placeholder="http://...:4200">
+  </label>
+  <label>Khoá extension (không bắt buộc)
+    <small>Chỉ nhập nếu máy chủ có đặt BILL_EXT_KEY.</small>
+    <input type="text" id="extKey">
+  </label>
+  <label>Địa chỉ trang POS bán hàng
+    <small>Extension chỉ hoạt động trên các trang này. Mỗi dòng một địa chỉ, có thể dùng dấu * (ví dụ: pos.cuahang.vn hoặc https://abc.vn/ban-hang*).</small>
+    <textarea id="posUrls" placeholder="pos.cuahang.vn"></textarea>
+  </label>
+  <label>Tên cửa hàng (in trên phiếu)
+    <input type="text" id="store" placeholder="Sakuko ...">
+  </label>
+
+  <h2>2. Khi nào in phiếu thứ 2</h2>
+  <label>Thời điểm in
+    <select id="triggerMode">
+      <option value="print">Ngay sau khi POS in bill thanh toán xong (khuyên dùng)</option>
+      <option value="click">Khi thu ngân bấm nút thanh toán / in bill</option>
+      <option value="both">Cả hai</option>
+    </select>
+  </label>
+  <div class="row">
+    <label>Chữ trên nút thanh toán
+      <small>Dùng khi chọn "bấm nút". Ví dụ: Thanh toán</small>
+      <input type="text" id="payText">
+    </label>
+    <label>Hoặc CSS selector của nút
+      <small>Ví dụ: #btn-pay, .btn-checkout</small>
+      <input type="text" id="paySelector">
+    </label>
+  </div>
+  <div class="row">
+    <label>Chờ sau khi bấm nút (mili giây)
+      <input type="number" id="clickDelayMs" min="0" step="100">
+    </label>
+    <label>Bỏ qua lần in lặp trong (giây)
+      <small>POS in 2 liên thì vẫn chỉ ra 1 phiếu.</small>
+      <input type="number" id="cooldownSec" min="0" step="1">
+    </label>
+  </div>
+
+  <h2>3. Cách nhận biết sản phẩm trên bill</h2>
+  <label>Nguồn so khớp
+    <select id="matchMode">
+      <option value="both">Mã thu ngân tít + nội dung bill in ra (khuyên dùng)</option>
+      <option value="scan">Chỉ theo mã thu ngân tít</option>
+      <option value="text">Chỉ theo nội dung bill in ra</option>
+    </select>
+  </label>
+  <label>CSS selector vùng giỏ hàng (không bắt buộc)
+    <small>Nếu POS in bill ngay trên trang bán hàng, khai báo vùng chứa các dòng hàng để khớp theo tên chính xác hơn. Ví dụ: #cart-table</small>
+    <input type="text" id="cartSelector">
+  </label>
+  <div class="row">
+    <label>Mã đã tít quá bao lâu chưa in bill thì bỏ (phút)
+      <input type="number" id="scanTtlMin" min="1" step="1">
+    </label>
+    <div>
+      <label class="check"><input type="checkbox" id="showQty"> In số lượng (= số lần tít)</label>
+      <label class="check"><input type="checkbox" id="enabled"> Bật extension</label>
+    </div>
+  </div>
+
+  <h2>4. In không hỏi (in im lặng)</h2>
+  <div class="hint">
+    Để phiếu tự in ra mà không hiện hộp thoại, mở Chrome/Edge bằng lối tắt có thêm cờ <code>--kiosk-printing</code>
+    và đặt máy in bill POS làm <b>máy in mặc định</b> của Windows. Chi tiết xem file <code>HUONG-DAN.md</code> trong thư mục extension.
+  </div>
+
+  <div class="bar">
+    <button class="primary" id="save">Lưu</button>
+    <button id="sync">Đồng bộ danh sách ngay</button>
+    <button id="test">In thử 1 phiếu</button>
+    <span id="msg"></span>
+  </div>
+
+  <script src="lib/config.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; width: 300px; margin: 0; padding: 12px; color: #1f2937; font-size: 13px; }
+    h1 { font-size: 14px; margin: 0 0 8px; }
+    .line { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
+    .line span:first-child { color: #6b7280; }
+    .ok { color: #047857; font-weight: 600; } .err { color: #b91c1c; font-weight: 600; }
+    ul { margin: 4px 0 0; padding-left: 18px; max-height: 110px; overflow: auto; }
+    .box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px; margin-top: 8px; }
+    .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+    button { padding: 6px 8px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font: inherit; cursor: pointer; }
+    #msg { margin-top: 8px; min-height: 16px; }
+  </style>
+</head>
+<body>
+  <h1>In bill thứ 2 (80×45mm)</h1>
+  <div class="line"><span>Trạng thái</span><span id="state"></span></div>
+  <div class="line"><span>Danh sách trên web</span><span id="count"></span></div>
+  <div class="line"><span>Đồng bộ lúc</span><span id="synced"></span></div>
+  <div class="box">
+    <b>Bill đang tít</b> <span id="pendingCount"></span>
+    <ul id="pending"></ul>
+  </div>
+  <div class="btns">
+    <button id="reprint">In lại phiếu gần nhất</button>
+    <button id="clear">Xoá mã đang chờ</button>
+    <button id="sync">Đồng bộ danh sách</button>
+    <button id="options">Cài đặt</button>
+  </div>
+  <div id="msg"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

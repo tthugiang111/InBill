@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh sách in bill thứ 2 – Xưởng tem Sakuko</title>
+  <link rel="stylesheet" href="/bill-ext/lib/slip.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f9fafb; color: #1f2937; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 16px; }
+    .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+    h1 { font-size: 20px; margin: 0 0 2px; } h2 { font-size: 15px; margin: 0 0 8px; }
+    .muted { color: #6b7280; } .small { font-size: 12px; } .hidden { display: none !important; }
+    a { color: #be185d; font-weight: 600; }
+    .grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(330px, 1fr); gap: 16px; align-items: start; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .col { display: grid; gap: 16px; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; }
+    .card.pink { background: #fdf2f8; border-color: #fbcfe8; }
+    .card.center { text-align: center; padding: 28px; }
+    input[type=text], textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 6px; padding: 7px 10px; font: inherit; }
+    label.f { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin: 8px 0 3px; }
+    button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; padding: 6px 12px; }
+    button.primary { background: #be185d; border-color: #be185d; color: #fff; font-weight: 600; }
+    button.link { border: 0; background: none; color: #dc2626; font-size: 12px; font-weight: 600; padding: 2px 4px; }
+    button:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: default; }
+    .results { margin-top: 8px; max-height: 230px; overflow: auto; }
+    .result { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
+    .result .name { flex: 1; } .code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #6b7280; white-space: nowrap; }
+    .result .code { width: 120px; flex: none; }
+    details { margin-top: 12px; } summary { cursor: pointer; color: #be185d; font-weight: 600; } details textarea { margin: 8px 0 6px; }
+    .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .scroll { overflow: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 12px; color: #6b7280; font-weight: 600; padding: 6px 8px 6px 0; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+    th span { font-weight: 400; }
+    td { padding: 6px 8px 6px 0; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    td input[type=text] { padding: 4px 8px; min-width: 130px; }
+    tr.off td { opacity: .5; }
+    .msg { margin: 8px 0 0; min-height: 18px; } .ok { color: #047857; } .err { color: #b91c1c; }
+    #preview { background: #f3f4f6; padding: 10px; border-radius: 8px; overflow: auto; }
+    #preview .slip { box-shadow: 0 1px 6px rgba(0,0,0,.25); }
+    .logs { max-height: 290px; overflow: auto; } .log { padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
+    code { background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>🧾 Danh sách in bill thứ 2 (phiếu 80×45mm)</h1>
+        <div class="muted">Thu ngân tít sản phẩm nằm trong danh sách này → sau khi bill thanh toán in xong, máy in bill tự in thêm 1 phiếu 80×45mm.</div>
+      </div>
+      <a href="/" style="white-space:nowrap">← Về Xưởng tem</a>
+    </div>
+
+    <div id="denied" class="card center hidden">
+      <p id="deniedText" class="err" style="font-weight:600"></p>
+      <a href="/api/auth/lark/login">Đăng nhập bằng Lark</a>
+    </div>
+
+    <div id="main" class="grid hidden">
+      <div class="col">
+        <div class="card">
+          <h2>Thêm sản phẩm</h2>
+          <input id="q" type="text" placeholder="Gõ tên hoặc mã vạch để tìm trong danh mục hàng…">
+          <div id="results" class="results"></div>
+          <details>
+            <summary>Dán nhiều mã vạch / mã hàng cùng lúc</summary>
+            <textarea id="bulk" rows="4" placeholder="Mỗi dòng 1 mã vạch hoặc mã hàng"></textarea>
+            <button id="bulkAdd" class="primary">Thêm tất cả</button>
+          </details>
+          <p id="addMsg" class="msg"></p>
+        </div>
+
+        <div class="card">
+          <div class="head">
+            <h2>Sản phẩm sẽ in phiếu <span id="count" class="muted" style="font-weight:400"></span></h2>
+            <span class="muted small">Máy thu ngân tự cập nhật trong vòng 5 phút</span>
+          </div>
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Bật</th><th>Mã vạch</th><th>Tên sản phẩm</th>
+                  <th>Tên in trên phiếu <span>(để trống = tên gốc)</span></th>
+                  <th>Ghi chú in kèm</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+          <p id="empty" class="muted hidden" style="text-align:center;padding:20px 0">Chưa có sản phẩm nào. Tìm và thêm ở ô phía trên.</p>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card">
+          <h2>Mẫu phiếu 80×45mm</h2>
+          <label class="f" for="title">Tiêu đề phiếu</label>
+          <input id="title" type="text" maxlength="60">
+          <label class="f" for="footer">Dòng cuối phiếu</label>
+          <input id="footer" type="text" maxlength="60">
+          <p style="margin:10px 0 0"><button id="saveSettings" class="primary">Lưu mẫu phiếu</button> <span id="setMsg"></span></p>
+          <p class="muted small" style="margin:12px 0 4px">Xem trước (kích thước thật):</p>
+          <div id="preview"></div>
+        </div>
+
+        <div class="card">
+          <h2>Phiếu in gần đây</h2>
+          <div id="logs" class="logs"></div>
+        </div>
+
+        <div class="card pink">
+          <b>Cài máy thu ngân:</b> cài extension trong thư mục <code>extension/</code> của dự án (xem <code>extension/HUONG-DAN.md</code>).
+          Muốn thử trước không cần POS thật: mở <a href="/bill-pos-demo.html" target="_blank">trang POS mẫu</a>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/bill-ext/lib/slip.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let items = [];
+
+    async function api(path, opts) {
+      const res = await fetch(path, {
+        ...opts,
+        headers: { 'Content-Type': 'application/json' },
+        body: opts && opts.body ? JSON.stringify(opts.body) : undefined,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw Object.assign(new Error(data.error || 'Lỗi ' + res.status), { status: res.status });
+      return data;
+    }
+
+    function el(tag, cls, text) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text != null) e.textContent = text;
+      return e;
+    }
+
+    function say(id, text, ok) {
+      $(id).textContent = text;
+      $(id).className = (id === 'setMsg' ? '' : 'msg ') + (ok ? 'ok' : 'err');
+    }
+
+    // ---------- Danh sách ----------
+    function renderRows() {
+      const tbody = $('rows');
+      tbody.textContent = '';
+      $('count').textContent = `(${items.filter((i) => i.active).length} đang bật / ${items.length})`;
+      $('empty').classList.toggle('hidden', items.length > 0);
+      for (const it of items) {
+        const tr = el('tr', it.active ? '' : 'off');
+
+        const tdOn = el('td');
+        const cb = el('input');
+        cb.type = 'checkbox';
+        cb.checked = it.active;
+        cb.addEventListener('change', () => patch(it.id, { active: cb.checked }));
+        tdOn.appendChild(cb);
+
+        const tdCode = el('td', 'code', it.barcode);
+        const tdName = el('td', '', it.name);
+
+        const mkInput = (field, max, placeholder) => {
+          const td = el('td');
+          const inp = el('input');
+          inp.type = 'text';
+          inp.value = it[field] || '';
+          inp.maxLength = max;
+          inp.placeholder = placeholder;
+          inp.addEventListener('change', () => patch(it.id, { [field]: inp.value }));
+          td.appendChild(inp);
+          return td;
+        };
+
+        const tdDel = el('td');
+        const del = el('button', 'link', 'Xoá');
+        del.addEventListener('click', async () => {
+          await api('/api/bill/items/' + it.id, { method: 'DELETE' });
+          items = items.filter((x) => x.id !== it.id);
+          renderRows();
+          renderPreview();
+        });
+        tdDel.appendChild(del);
+
+        tr.append(tdOn, tdCode, tdName, mkInput('print_name', 60, 'Tên ngắn gọn'), mkInput('note', 80, 'vd: Tặng kèm 1 mẫu thử'), tdDel);
+        tbody.appendChild(tr);
+      }
+    }
+
+    async function patch(id, body) {
+      const updated = await api('/api/bill/items/' + id, { method: 'PATCH', body });
+      items = items.map((x) => (x.id === id ? updated : x));
+      renderRows();
+      renderPreview();
+    }
+
+    async function addItems(body) {
+      try {
+        const r = await api('/api/bill/items', { method: 'POST', body });
+        items = await api('/api/bill/items');
+        renderRows();
+        renderPreview();
+        let text = `Đã thêm ${r.added.length} sản phẩm.`;
+        if (r.notFound.length) text += ` Không tìm thấy ${r.notFound.length} mã: ${r.notFound.slice(0, 10).join(', ')}`;
+        say('addMsg', text, !r.notFound.length);
+      } catch (e) {
+        say('addMsg', e.message, false);
+      }
+    }
+
+    // ---------- Tìm sản phẩm ----------
+    let timer = null;
+    $('q').addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(search, 300);
+    });
+    async function search() {
+      const q = $('q').value.trim();
+      const box = $('results');
+      box.textContent = '';
+      if (q.length < 2) return;
+      const found = await api('/api/products?q=' + encodeURIComponent(q));
+      if (!found.length) return box.appendChild(el('div', 'muted', 'Không tìm thấy sản phẩm nào.'));
+      for (const p of found) {
+        const row = el('div', 'result');
+        row.appendChild(el('span', 'code', p.barcode || '(không mã vạch)'));
+        row.appendChild(el('span', 'name', p.name));
+        const have = items.some((i) => i.barcode === p.barcode);
+        const btn = el('button', 'primary', have ? 'Đã có' : 'Thêm');
+        btn.disabled = have || !p.barcode;
+        btn.addEventListener('click', async () => {
+          await addItems({ barcode: p.barcode, item_no: p.item_no, name: p.name });
+          search();
+        });
+        row.appendChild(btn);
+        box.appendChild(row);
+      }
+    }
+    $('bulkAdd').addEventListener('click', async () => {
+      if (!$('bulk').value.trim()) return;
+      await addItems({ barcodes: $('bulk').value });
+      $('bulk').value = '';
+    });
+
+    // ---------- Mẫu phiếu ----------
+    function renderPreview() {
+      const sample = items.filter((i) => i.active).slice(0, 4).map((i) => ({ name: i.print_name || i.name, note: i.note || '' }));
+      BillSlip.renderSlip($('preview'), {
+        title: $('title').value,
+        footer: $('footer').value,
+        store: 'Tên cửa hàng',
+        time: Date.now(),
+        items: sample.length ? sample : [{ name: 'Sản phẩm mẫu 1', note: 'Ghi chú mẫu' }, { name: 'Sản phẩm mẫu 2' }],
+      });
+    }
+    $('title').addEventListener('input', renderPreview);
+    $('footer').addEventListener('input', renderPreview);
+    $('saveSettings').addEventListener('click', async () => {
+      try {
+        await api('/api/bill/settings', { method: 'PUT', body: { title: $('title').value, footer: $('footer').value } });
+        say('setMsg', 'Đã lưu.', true);
+      } catch (e) {
+        say('setMsg', e.message, false);
+      }
+    });
+
+    // ---------- Lịch sử ----------
+    async function loadLogs() {
+      const logs = await api('/api/bill/logs');
+      const box = $('logs');
+      box.textContent = '';
+      if (!logs.length) return box.appendChild(el('div', 'muted', 'Chưa có phiếu nào được in.'));
+      for (const l of logs.slice(0, 30)) {
+        const row = el('div', 'log');
+        row.appendChild(el('div', 'muted small', `${new Date(l.created_at).toLocaleString('vi-VN')} · ${l.store_name || 'Chưa đặt tên cửa hàng'}`));
+        row.appendChild(el('div', '', (l.items || []).map((i) => i.name).join(', ')));
+        box.appendChild(row);
+      }
+    }
+
+    // ---------- Khởi động ----------
+    (async () => {
+      try {
+        items = await api('/api/bill/items');
+      } catch (e) {
+        $('deniedText').textContent = e.status === 401 ? 'Bạn cần đăng nhập bằng tài khoản Admin để sửa danh sách in bill.' : e.message;
+        return $('denied').classList.remove('hidden');
+      }
+      $('main').classList.remove('hidden');
+      const settings = await api('/api/bill/settings');
+      $('title').value = settings.title;
+      $('footer').value = settings.footer;
+      renderRows();
+      renderPreview();
+      loadLogs();
+    })();
+  </script>
+</body>
+</html>

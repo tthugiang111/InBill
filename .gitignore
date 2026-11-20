@@ -1,0 +1,12 @@
+public/out/
+*.log
+.DS_Store
+.env
+sakuko-xuong-tem
+
+# cau hinh nguon Lark cua tung may
+bot/data/lark-nguon.json
+bot/data/be-tem-nho.json
+node_modules/
+scratch/
+*.png

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>POS mẫu (để thử extension in bill thứ 2)</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; max-width: 640px; margin: 24px auto; padding: 0 16px; }
+    input { font-size: 18px; padding: 8px 10px; width: 100%; box-sizing: border-box; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    td, th { border-bottom: 1px solid #ddd; padding: 6px 4px; text-align: left; }
+    button { font-size: 16px; padding: 10px 16px; cursor: pointer; }
+    .note { background: #fef9c3; padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+    #receipt { display: none; }
+    @media print {
+      @page { size: 80mm auto; margin: 3mm; }
+      body > *:not(#receipt) { display: none; }
+      #receipt { display: block; font-family: monospace; font-size: 10pt; }
+    }
+  </style>
+</head>
+<body>
+  <h2>POS mẫu</h2>
+  <p class="note">Trang giả lập để thử extension, không phải POS thật. Tít (hoặc gõ) mã vạch rồi Enter, sau đó bấm "Thanh toán &amp; in bill".
+    Trong cài đặt extension, thêm địa chỉ trang này vào ô "Địa chỉ trang POS".</p>
+  <input id="scan" autofocus placeholder="Tít mã vạch vào đây…">
+  <table><thead><tr><th>Mã vạch</th><th>Tên</th><th>SL</th></tr></thead><tbody id="cart"></tbody></table>
+  <button id="pay">Thanh toán &amp; in bill</button>
+  <div id="receipt"></div>
+  <script>
+    const cart = new Map();
+    const $ = (id) => document.getElementById(id);
+    function render() {
+      $('cart').textContent = '';
+      for (const [code, line] of cart) {
+        const tr = document.createElement('tr');
+        for (const v of [code, line.name, line.qty]) {
+          const td = document.createElement('td');
+          td.textContent = v;
+          tr.appendChild(td);
+        }
+        $('cart').appendChild(tr);
+      }
+    }
+    $('scan').addEventListener('keydown', async (e) => {
+      if (e.key !== 'Enter') return;
+      const code = $('scan').value.trim();
+      $('scan').value = '';
+      if (!code) return;
+      let name = '(sản phẩm ngoài danh mục)';
+      try {
+        const found = await (await fetch('/api/products?q=' + encodeURIComponent(code))).json();
+        const hit = found.find((p) => p.barcode === code);
+        if (hit) name = hit.name;
+      } catch (err) { /* không có máy chủ thì vẫn thử được */ }
+      const line = cart.get(code) || { name, qty: 0 };
+      line.qty += 1;
+      cart.set(code, line);
+      render();
+    });
+    $('pay').addEventListener('click', () => {
+      if (!cart.size) return;
+      const lines = [...cart.values()].map((l) => `${l.name}  x${l.qty}`);
+      $('receipt').textContent = '';
+      for (const text of ['HOÁ ĐƠN BÁN LẺ (MẪU)', '--------------------', ...lines, '--------------------', 'Cảm ơn quý khách']) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        $('receipt').appendChild(div);
+      }
+      window.print();
+      cart.clear();
+      render();
+      $('scan').focus();
+    });
+  </script>
+</body>
+</html>
